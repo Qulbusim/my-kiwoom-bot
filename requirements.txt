@@ -1,0 +1,4 @@
+pyqt5~=5.15.11
+requests~=2.27.1
+pandas~=1.4.2
+pyyaml~=6.0.3

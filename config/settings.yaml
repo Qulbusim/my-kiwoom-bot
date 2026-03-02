@@ -1,0 +1,22 @@
+account_index: 1
+
+request_limit:
+  order:
+    max_per_sec: 4
+    max_per_min: 59
+    max_per_hour: 999
+  tr:
+    max_per_sec: 4
+    max_per_min: 59
+    max_per_hour: 999
+
+paths:
+  event_log_root: logs/app
+
+fee:
+  broker_fee_rate: 0 # 왕복 이중
+  exchange_fee_rate: 0.000036396 # 왕복 이중, 거래소에 따라 미세차이
+  tax_rate: 0.002 # 매도시
+
+WEBHOOK_URL:
+  DISCORD_WEBHOOK_URL: None # your_discord_webhook_url
