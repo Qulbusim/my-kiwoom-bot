@@ -40,6 +40,7 @@ class Semiconductor(QObject):
         # data
         self.holdings = pd.DataFrame(columns=["종목명","현재가","매입단가","보유수량","가능수량","평가손익"])
         self.watchlist = pd.DataFrame(columns=["종목명","현재가","등락률"]).astype({"등락률": "float64"})
+        self.ordered_codes = set()
 
         # 기타
         self.stop_order = False
@@ -172,6 +173,11 @@ class Semiconductor(QObject):
             당일매매수수료 = payload.get("당일매매수수료", 0)
             당일매매세금 = payload.get("당일매매세금", 0)
 
+            if 미체결수량:
+                self.ordered_codes.add(code)
+            elif 미체결수량 == 0:
+                self.ordered_codes.discard(code)
+
         elif payload.get("구분") == "1": # 국내주식 잔고변경 시
             code = payload.get("종목코드")
             종목명 = payload.get("종목명")
@@ -242,7 +248,7 @@ class Semiconductor(QObject):
             holdings_high_rate = watchlist.loc[holdings_high_code, "등락률"]
         if holdings_high_rate + 2 < highest_rate:
             # sell holdings_high
-            if holdings_high_code in self.holdings.index:
+            if holdings_high_code in self.holdings.index and holdings_high_code not in self.ordered_codes:
                 order_type = 2  # 신규매도
                 code = holdings_high_code
                 qty = self.holdings.loc[code, "보유수량"]
@@ -253,13 +259,14 @@ class Semiconductor(QObject):
 
             # buy highest
             # can_buy()로 인해 save_chejan_event()에서 매도 확인 후 주문 방식이 맞으나, 테스트용으로 cal_strategy()에 위치
-            order_type = 1  # 신규매수
-            code = highest_code
-            qty = self.calculate_qty(self.watchlist.loc[code, "현재가"])
-            price = 0
-            hoga_gb = "03"
-            org_order_no = ""
-            self.strategy_req_order(order_type, code, qty, price, hoga_gb, org_order_no)
+            if highest_code not in self.ordered_codes:
+                order_type = 1  # 신규매수
+                code = highest_code
+                qty = self.calculate_qty(self.watchlist.loc[code, "현재가"])
+                price = 0
+                hoga_gb = "03"
+                org_order_no = ""
+                self.strategy_req_order(order_type, code, qty, price, hoga_gb, org_order_no)
 
     # ---------------------------------------------------------------------
     # 기타
