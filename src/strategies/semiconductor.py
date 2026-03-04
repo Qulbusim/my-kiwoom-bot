@@ -1,3 +1,5 @@
+import uuid
+
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 import pandas as pd
 
@@ -40,11 +42,11 @@ class Semiconductor(QObject):
         # data
         self.holdings = pd.DataFrame(columns=["종목명","현재가","매입단가","보유수량","가능수량","평가손익"])
         self.watchlist = pd.DataFrame(columns=["종목명","현재가","등락률"]).astype({"등락률": "float64"})
-        self.ordered_codes = set()
 
         # 기타
         self.stop_order = False
         self._init_done = set()
+        self.ordered_codes = set()
 
     def strategy_start(self):
         self.load_strategy_cfg()
@@ -173,9 +175,7 @@ class Semiconductor(QObject):
             당일매매수수료 = payload.get("당일매매수수료", 0)
             당일매매세금 = payload.get("당일매매세금", 0)
 
-            if 미체결수량:
-                self.ordered_codes.add(code)
-            elif 미체결수량 == 0:
+            if 미체결수량 == 0:
                 self.ordered_codes.discard(code)
 
         elif payload.get("구분") == "1": # 국내주식 잔고변경 시
@@ -256,6 +256,7 @@ class Semiconductor(QObject):
                 hoga_gb = "03"
                 org_order_no = ""
                 self.strategy_req_order(order_type, code, qty, price, hoga_gb, org_order_no)
+                self.ordered_codes.add(code)
 
             # buy highest
             # can_buy()로 인해 save_chejan_event()에서 매도 확인 후 주문 방식이 맞으나, 테스트용으로 cal_strategy()에 위치
@@ -267,6 +268,7 @@ class Semiconductor(QObject):
                 hoga_gb = "03"
                 org_order_no = ""
                 self.strategy_req_order(order_type, code, qty, price, hoga_gb, org_order_no)
+                self.ordered_codes.add(code)
 
     # ---------------------------------------------------------------------
     # 기타
@@ -354,21 +356,23 @@ class Semiconductor(QObject):
             else:
                 수익률 = 0
 
-            if 수익률 > self.take_profit_pct: # 익절
+            if 수익률 > self.take_profit_pct and code not in self.ordered_codes: # 익절
                 order_type = 2  # 신규매도
                 qty = 보유수량
                 price = 0
                 hoga_gb = "03"
                 org_order_no = ""
                 self.strategy_req_order(order_type, code, qty, price, hoga_gb, org_order_no)
+                self.ordered_codes.add(code)
 
-            elif 수익률 < self.stop_loss_pct: # 손절
+            elif 수익률 < self.stop_loss_pct and code not in self.ordered_codes: # 손절
                 order_type = 2  # 신규매도
                 qty = 보유수량
                 price = 0
                 hoga_gb = "03"
                 org_order_no = ""
                 self.strategy_req_order(order_type, code, qty, price, hoga_gb, org_order_no)
+                self.ordered_codes.add(code)
 
     def calculate_qty(self, 현재가: int) -> int:
         return self.max_order_amount_krw // 현재가
