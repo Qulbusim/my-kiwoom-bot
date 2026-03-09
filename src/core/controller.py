@@ -82,7 +82,7 @@ class Controller:
                 매입가 = int(self.api.get_comm_data(tr_code, rq_name, i, "매입가"))
                 보유수량 = int(self.api.get_comm_data(tr_code, rq_name, i, "보유수량"))
                 현재가 = int(self.api.get_comm_data(tr_code, rq_name, i, "현재가").replace('-', ''))
-                # 매매가능수량 = int(self.api.get_comm_data(tr_code, rq_name, i, "매매가능수량"))
+                매매가능수량 = int(self.api.get_comm_data(tr_code, rq_name, i, "매매가능수량"))
                 # 매입수수료 = int(self.api.get_comm_data(tr_code, rq_name, i, "매입수수료"))
                 # 평가금액 = int(self.api.get_comm_data(tr_code, rq_name, i, "평가금액"))
                 # 평가수수료 = int(self.api.get_comm_data(tr_code, rq_name, i, "평가수수료"))
@@ -94,6 +94,7 @@ class Controller:
                     "현재가": 현재가,
                     "매입단가": 매입가,
                     "보유수량": 보유수량,
+                    "가능수량": 매매가능수량,
                     "평가손익": 평가손익,
                 }
             self.strategy.receive_balance_info(balance_info)

@@ -24,5 +24,5 @@ risk:
   max_positions: 3 # 최대 보유종목
   max_order_amount_krw: 500000 # 1회 최대 주문 금액
   max_daily_loss_krw: 1000000 # 일 최대 손실
-  take_profit_pct: 2.0 # 개별 종목 익절
-  stop_loss_pct: -2.0 # 개별 종목 손절
+  take_profit_pct: 4.0 # 개별 종목 익절
+  stop_loss_pct: -4.0 # 개별 종목 손절

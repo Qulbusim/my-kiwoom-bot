@@ -1,12 +1,13 @@
 # my-kiwoom-bot
 
 키움 OpenAPI+ 기반 트레이딩 봇<br>
-테스트용 샘플 전략(관심종목 중 등락률 상위 매수)
+테스트용 샘플 전략(관심종목 중 등락률 상위 매수. 실행 시 즉시 시작)
 
-#### Conda 32비트 가상환경 설정
-1. `set CONDA_FORCE_32BIT=1`
-2. `conda create -n <환경명> python=<버전>`
-3. `conda config --env --set subdir win-32`
+#### 요구사항
+1. 32비트 환경
+2. 키움증권 계좌
+3. Open API+ 사용 신청 및 설치
+4. 모의투자 신청(권장)
 
 #### settings
 - account_index: 거래할 계좌 선택

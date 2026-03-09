@@ -1,5 +1,3 @@
-import uuid
-
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 import pandas as pd
 
@@ -46,7 +44,7 @@ class Semiconductor(QObject):
         # 기타
         self.stop_order = False
         self._init_done = set()
-        self.ordered_codes = set()
+        self.ordered_codes = set() # 현재 매수매도 구분 없음. 한종목 매수매도 중복주문이 필요하면 수정 필요
 
     def strategy_start(self):
         self.load_strategy_cfg()
@@ -215,6 +213,7 @@ class Semiconductor(QObject):
             self.holdings.loc[code, "현재가"] = item.get("현재가", 0)
             self.holdings.loc[code, "매입단가"] = item.get("매입단가", 0)
             self.holdings.loc[code, "보유수량"] = item.get("보유수량", 0)
+            self.holdings.loc[code, "가능수량"] = item.get("가능수량", 0)
             self.holdings.loc[code, "평가손익"] = item.get("평가손익", 0)
         self._init_done.add("holdings")
         self._start_runtime()
@@ -236,16 +235,18 @@ class Semiconductor(QObject):
         관심종목 중 등락률이 제일 높은 종목 매수
         다른 종목이 2% 초과 등락률이 높아질 경우 갈아탐
         """
-        watchlist = self.watchlist[self.watchlist["등락률"] < 27] # 상한가 따라잡기 제외(미체결 가능성)
-        highest_code =  watchlist["등락률"].idxmax() # 관심종목중 최고 등락률(code)
-        highest_rate = watchlist.loc[highest_code, "등락률"]
-        hold_codes = self.holdings.index.intersection(watchlist.index) # holdings중 watchlist에 있는 코드들
+        highest_code = self.watchlist["등락률"].idxmax() # 관심종목중 최고 등락률(code)
+        highest_rate = self.watchlist.loc[highest_code, "등락률"]
+
+        hold_codes = self.holdings.index.intersection(self.watchlist.index) # holdings중 watchlist에 있는 코드들
+
         if len(hold_codes) == 0:
             holdings_high_code = ""
             holdings_high_rate = -33
         else:
-            holdings_high_code = watchlist.loc[hold_codes, "등락률"].idxmax()
-            holdings_high_rate = watchlist.loc[holdings_high_code, "등락률"]
+            holdings_high_code = self.watchlist.loc[hold_codes, "등락률"].idxmax() # 갱신이 빠른 watchlist 이용
+            holdings_high_rate = self.watchlist.loc[holdings_high_code, "등락률"]
+
         if holdings_high_rate + 2 < highest_rate:
             # sell holdings_high
             if holdings_high_code in self.holdings.index and holdings_high_code not in self.ordered_codes:
@@ -327,7 +328,7 @@ class Semiconductor(QObject):
             self.stop_loss_timer.stop()
             for code in self.holdings.index: # 미체결수량이 없을 시(주문을 시장가로 하지 않을 시 수정 필요)
                 order_type = 2
-                qty = self.holdings.loc[code, "보유수량"]
+                qty = self.holdings.loc[code, "가능수량"]
                 price = 0
                 hoga_gb = "03"
                 org_order_no = ""
